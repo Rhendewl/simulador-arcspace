@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>Simulador Arc Space</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&amp;family=Raleway:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      background-color: #001038;
+      font-family: 'Raleway', sans-serif;
+      color: white;
+      padding: 20px;
+    }
+    h1 {
+      font-family: 'Michroma', sans-serif;
+      color: white;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #ccc;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #0a153b;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .col {
+      flex: 1;
+      min-width: 150px;
+      display: flex;
+      flex-direction: column;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      background-color: #001c58;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .warning {
+      color: #ff5555;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .info-label {
+      font-size: 12px;
+      color: #bbb;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      background-color: #0047ff;
+      color: white;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .resumo {
+      white-space: pre-wrap;
+      margin-top: 20px;
+      background-color: #001c58;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1>Simulador Arc Space</h1>
+<div class="subtitle">@spaceinc.br</div>
+<div class="container">
+<div class="row">
+<div class="col">
+<label for="numeroSala">Número da Sala</label>
+<input id="numeroSala" type="text"/>
+</div>
+<div class="col">
+<label for="preco">Preço da Sala (R$)</label>
+<input id="preco" type="number"/>
+</div>
+</div>
+<div class="row">
+<div class="col">
+<label>Entrada</label>
+<input id="entradaPct" type="number"/>%
+        <div class="warning" id="entradaAviso"></div>
+</div>
+<div class="col">
+<label>N/P</label>
+<input id="entradaParcelas" style="max-width: 80px;" type="number" value="1"/>
+</div>
+<div class="col">
+<label>Valor por parcela (R$)</label>
+<input id="entradaValor" type="number"/>
+</div>
+</div>
+<div class="row">
+<div class="col">
+<label>Parcelas Mensais</label>
+<input id="mensaisPct" type="number"/>%
+        <div class="warning" id="mensaisAviso"></div>
+</div>
+<div class="col">
+<label>N/P</label>
+<input id="mensaisParcelas" style="max-width: 80px;" type="number" value="48"/>
+</div>
+<div class="col">
+<label>Valor por parcela (R$)</label>
+<input id="mensaisValor" type="number"/>
+</div>
+</div>
+<div class="row">
+<div class="col">
+<label>Parcelas Semestrais</label>
+<input id="semestraisPct" type="number"/>%
+        <div class="warning" id="semestraisAviso"></div>
+</div>
+<div class="col">
+<label>N/P</label>
+<input id="semestraisParcelas" style="max-width: 80px;" type="number" value="8"/>
+</div>
+<div class="col">
+<label>Valor por parcela (R$)</label>
+<input id="semestraisValor" type="number"/>
+</div>
+</div>
+<div class="row">
+<div class="col">
+<label>Entrega</label>
+<input id="entregaPct" type="number"/>%
+        <div class="warning" id="entregaAviso"></div>
+</div>
+<div class="col">
+<label>Valor (R$)</label>
+<input id="entregaValor" type="number"/>
+</div>
+</div>
+<div id="alertaPercentual"></div>
+<button onclick="gerarResumo()">Gerar Resumo</button>
+<div class="resumo" id="resumo" style="display:none;"></div>
+<button id="copiarResumo" onclick="copiarTexto()" style="display:none;">Copiar Resumo</button>
+</div>
+<footer>®Space Incorporadora</footer>
+<script>
+function formatar(valor) {
+  return valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function atualizarValoresOrigemPct(tipo) {
+  const preco = parseFloat(document.getElementById('preco').value) || 0;
+  const pct = parseFloat(document.getElementById(tipo + 'Pct').value) || 0;
+  const parcelas = parseInt(document.getElementById(tipo + 'Parcelas').value) || 1;
+  const valor = ((preco * pct / 100) / parcelas);
+  document.getElementById(tipo + 'Valor').value = valor.toFixed(2);
+}
+
+function atualizarPctOrigemValor(tipo) {
+  const preco = parseFloat(document.getElementById('preco').value) || 0;
+  const parcelas = parseInt(document.getElementById(tipo + 'Parcelas').value) || 1;
+  const valorParcela = parseFloat(document.getElementById(tipo + 'Valor').value) || 0;
+  const novaPct = (valorParcela * parcelas) / preco * 100;
+  document.getElementById(tipo + 'Pct').value = novaPct.toFixed(2);
+}
+
+function atualizarEntrega() {
+  const preco = parseFloat(document.getElementById('preco').value) || 0;
+  const entregaPct = parseFloat(document.getElementById('entregaPct').value) || 0;
+  const entregaValor = preco * entregaPct / 100;
+  document.getElementById('entregaValor').value = entregaValor.toFixed(2);
+}
+
+function notificarExcedente() {
+  const preco = parseFloat(document.getElementById('preco').value) || 0;
+  const totalAtual = {
+    entrada: parseFloat(document.getElementById('entradaPct').value) || 0,
+    mensais: parseFloat(document.getElementById('mensaisPct').value) || 0,
+    semestrais: parseFloat(document.getElementById('semestraisPct').value) || 0,
+    entrega: parseFloat(document.getElementById('entregaPct').value) || 0
+  };
+  const soma = totalAtual.entrada + totalAtual.mensais + totalAtual.semestrais + totalAtual.entrega;
+  const excesso = soma - 100;
+
+  ['entrada', 'mensais', 'semestrais', 'entrega'].forEach(tipo => {
+    const aviso = document.getElementById(tipo + 'Aviso');
+    aviso.innerText = '';
+  });
+
+  if (excesso > 0) {
+    ['entrada', 'mensais', 'semestrais', 'entrega'].forEach(tipo => {
+      const pctOriginal = totalAtual[tipo];
+      if (pctOriginal > 0) {
+        const novaPct = (pctOriginal - excesso).toFixed(2);
+        const aviso = document.getElementById(tipo + 'Aviso');
+        aviso.innerText = excesso.toFixed(2) + '% Excedido. Altere para ' + novaPct + '%';
+      }
+    });
+  }
+}
+
+function atualizarTudo(tipoOrigem) {
+  ['entrada', 'mensais', 'semestrais'].forEach(tipo => {
+    if (tipoOrigem === tipo + 'Pct') {
+      atualizarValoresOrigemPct(tipo);
+    } else if (tipoOrigem === tipo + 'Valor' || tipoOrigem === tipo + 'Parcelas') {
+      atualizarPctOrigemValor(tipo);
+    }
+  });
+
+  atualizarEntrega();
+  notificarExcedente();
+}
+
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('input', () => {
+    atualizarTudo(input.id);
+  });
+});
+
+function gerarResumo() {
+  const sala = document.getElementById('numeroSala').value;
+  const entradaPct = document.getElementById('entradaPct').value;
+  const entradaParcelas = document.getElementById('entradaParcelas').value;
+  const entradaValor = document.getElementById('entradaValor').value;
+
+  const mensaisPct = document.getElementById('mensaisPct').value;
+  const mensaisParcelas = document.getElementById('mensaisParcelas').value;
+  const mensaisValor = document.getElementById('mensaisValor').value;
+
+  const semestraisPct = document.getElementById('semestraisPct').value;
+  const semestraisParcelas = document.getElementById('semestraisParcelas').value;
+  const semestraisValor = document.getElementById('semestraisValor').value;
+
+  const entregaPct = document.getElementById('entregaPct').value;
+  const entregaValor = document.getElementById('entregaValor').value;
+
+  const resumo = 
+`• Simulação Sala ${sala}.
+
+• Entrada (${entradaPct}% em ${entradaParcelas}x): R$ ${formatar(Number(entradaValor))}
+• Parcelas Mensais (${mensaisPct}% em ${mensaisParcelas}x): R$ ${formatar(Number(mensaisValor))}
+• Semestrais (${semestraisPct}% em ${semestraisParcelas}x): R$ ${formatar(Number(semestraisValor))}
+• Entrega (${entregaPct}%): R$ ${formatar(Number(entregaValor))}`;
+
+  document.getElementById('resumo').innerText = resumo;
+  document.getElementById('resumo').style.display = 'block';
+  document.getElementById('copiarResumo').style.display = 'block';
+}
+
+function copiarTexto() {
+  navigator.clipboard.writeText(document.getElementById('resumo').innerText);
+  alert('Resumo copiado para a área de transferência!');
+}
+
+atualizarTudo();
+</script>
+</body>
+</html>
